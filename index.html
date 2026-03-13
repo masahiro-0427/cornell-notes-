@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cornell Notes | コーネル式ノート</title>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; }
+    body { background:#f0ede8; font-family:Georgia,'Times New Roman',serif; display:flex; flex-direction:column; min-height:100vh; }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:#e8e4de; }
+    ::-webkit-scrollbar-thumb { background:#bbb4a8; border-radius:3px; }
+
+    /* ══ ヘッダー ══ */
+    #header {
+      background:#2c3e50; color:#f5f0e8;
+      padding:10px 20px;
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+      box-shadow:0 2px 12px rgba(0,0,0,.22);
+      position:sticky; top:0; z-index:300;
+    }
+    #header .logo { display:flex; align-items:center; gap:10px; }
+    .logo-title { font-size:17px; font-weight:bold; letter-spacing:.07em; }
+    .logo-sub   { font-size:9px; opacity:.5; font-family:sans-serif; letter-spacing:.12em; }
+    #header .actions { display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+    .hbtn { border:none; border-radius:6px; padding:6px 13px; font-family:sans-serif; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap; }
+    .hbtn-add   { background:#e8d5b0; color:#2c3e50; }
+    .hbtn-add:hover { background:#f0e4c0; }
+    .hbtn-save  { background:#3d6b8a; color:#fff; transition:background .3s; }
+    .hbtn-save.ok { background:#4caf80; }
+    .hbtn-print { background:#5d6d7e; color:#fff; }
+    .hbtn-print:hover { background:#6d7d8e; }
+    .hbtn-home  { background:rgba(255,255,255,.15); color:#f5f0e8; }
+    .hbtn-home:hover { background:rgba(255,255,255,.25); }
+    #save-status { font-family:sans-serif; font-size:11px; color:#7a8fa0; transition:color .3s; white-space:nowrap; }
+    #save-status.ok { color:#7ecfa0; }
+
+    /* ══ レイアウト ══ */
+    #layout { display:flex; flex:1; min-height:0; }
+
+    /* ══ サイドバー ══ */
+    #sidebar {
+      width:210px; background:#e8e4de; border-right:1px solid #ccc4b8;
+      display:flex; flex-direction:column;
+      overflow:hidden; flex-shrink:0; transition:width .2s, opacity .2s;
+    }
+    #sidebar.hidden { width:0; opacity:0; pointer-events:none; }
+
+    /* 検索 */
+    #search-wrap { padding:10px 10px 6px; border-bottom:1px solid #d4d0ca; flex-shrink:0; }
+    #search-input {
+      width:100%; padding:6px 10px; border:1px solid #ccc4b8;
+      border-radius:5px; font-family:sans-serif; font-size:12px;
+      background:#fff; color:#333; outline:none;
+    }
+    #search-input:focus { border-color:#3d6b8a; }
+
+    /* タグフィルター */
+    #tag-filter-wrap { padding:4px 10px 6px; border-bottom:1px solid #d4d0ca; display:flex; flex-wrap:wrap; gap:4px; flex-shrink:0; min-height:30px; align-items:center; }
+    .tag-chip-filter {
+      font-family:sans-serif; font-size:10px; background:#fff;
+      border:1px solid #bbb4a8; border-radius:10px; padding:2px 8px;
+      cursor:pointer; transition:background .15s, color .15s;
+    }
+    .tag-chip-filter:hover { background:#3d6b8a; color:#fff; border-color:#3d6b8a; }
+    .tag-chip-filter.active { background:#3d6b8a; color:#fff; border-color:#3d6b8a; }
+    #tag-filter-label { font-family:sans-serif; font-size:9px; color:#aaa; letter-spacing:.1em; flex-basis:100%; }
+
+    .sidebar-title { font-family:sans-serif; font-size:9px; letter-spacing:.18em; color:#999; font-weight:bold; padding:10px 12px 4px; text-transform:uppercase; flex-shrink:0; }
+    #note-list { overflow-y:auto; flex:1; }
+
+    /* サイドバーヘッダー（×ボタン） */
+    #sidebar-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 12px 8px; border-bottom:1px solid #d4d0ca; flex-shrink:0;
+      background:#dedad4;
+    }
+    #sidebar-header-label { font-family:sans-serif; font-size:11px; font-weight:bold; color:#666; letter-spacing:.05em; }
+    #sidebar-close-btn {
+      background:none; border:none; color:#999; font-size:18px;
+      cursor:pointer; line-height:1; padding:0 2px; transition:color .15s;
+    }
+    #sidebar-close-btn:hover { color:#c0392b; }
+
+    .note-item { padding:9px 12px; cursor:pointer; border-left:3px solid transparent; position:relative; transition:background .1s; }
+    .note-item:hover { background:#ede9e3; }
+    .note-item.active { border-left-color:#3d6b8a; background:#fff; }
+    .note-item .nt { font-size:13px; color:#2c3e50; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:18px; }
+    .note-item.active .nt { font-weight:bold; }
+    .note-item .nd { font-size:10px; color:#999; font-family:sans-serif; margin-top:1px; }
+    .note-item .ntags { display:flex; flex-wrap:wrap; gap:3px; margin-top:3px; }
+    .tag-chip { font-family:sans-serif; font-size:9px; background:#e0dbd4; border-radius:8px; padding:1px 6px; color:#666; }
+    .note-item .del { position:absolute; top:8px; right:6px; background:none; border:none; color:#ccc; cursor:pointer; font-size:14px; line-height:1; }
+    .note-item .del:hover { color:#e88; }
+
+    /* ══ メイン ══ */
+    #main { flex:1; padding:20px 24px; overflow-y:auto; }
+    #paper { background:#fff; border-radius:4px; box-shadow:0 2px 24px rgba(0,0,0,.09); max-width:940px; margin:0 auto; border:1px solid #ddd8d0; overflow:hidden; }
+
+    /* ══ ノートヘッダー ══ */
+    #note-head { border-bottom:2px solid #e8a0a0; background:#fafaf8; padding:14px 22px 12px; display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; }
+    .flabel { font-family:sans-serif; font-size:8px; color:#bbb; letter-spacing:.15em; display:block; margin-bottom:3px; text-transform:uppercase; }
+    .finput { font-family:Georgia,serif; color:#2c3e50; border:none; border-bottom:1.5px solid #d0c8c0; outline:none; background:transparent; padding-bottom:2px; width:100%; }
+
+    /* タグ入力エリア */
+    #tag-input-wrap { display:flex; flex-wrap:wrap; gap:4px; align-items:center; flex-basis:100%; padding-top:6px; border-top:1px solid #eee; margin-top:4px; }
+    #tag-input-label { font-family:sans-serif; font-size:8px; color:#bbb; letter-spacing:.15em; text-transform:uppercase; margin-right:4px; }
+    .tag-badge { font-family:sans-serif; font-size:10px; background:#e8d5b0; border-radius:10px; padding:2px 8px; color:#5a4a2a; display:flex; align-items:center; gap:3px; }
+    .tag-badge .tag-x { cursor:pointer; color:#a08060; font-size:11px; line-height:1; }
+    .tag-badge .tag-x:hover { color:#c0392b; }
+    #tag-input {
+      border:none; outline:none; font-family:sans-serif; font-size:11px;
+      background:transparent; color:#555; width:120px;
+    }
+    #tag-input::placeholder { color:#ccc; }
+
+    /* ══ ツールバー（2行） ══ */
+    #toolbar {
+      border-bottom:1px solid #e0dbd4;
+      background:#f4f1ec;
+      position:relative;
+    }
+    /* ペンON インジケーター */
+    #pen-indicator {
+      height:3px; width:100%;
+      background:transparent;
+      transition:background .2s;
+    }
+    #toolbar-row1, #toolbar-row2 {
+      display:flex; align-items:center; gap:5px; flex-wrap:wrap;
+      padding:5px 12px;
+    }
+    #toolbar-row1 { border-bottom:1px solid #e8e2da; }
+    .tb-sep { width:1px; height:18px; background:#d0cbc4; margin:0 2px; flex-shrink:0; }
+    .tb-label { font-family:sans-serif; font-size:9px; color:#aaa; letter-spacing:.06em; flex-shrink:0; }
+
+    /* アクティブエリアラベル */
+    #active-area-label {
+      font-family:sans-serif; font-size:10px;
+      background:#3d6b8a; color:#fff;
+      border-radius:4px; padding:2px 9px;
+      letter-spacing:.04em; white-space:nowrap;
+      min-width:110px; text-align:center;
+      transition:background .2s;
+    }
+
+    /* ペンONバッジ */
+    #pen-on-badge {
+      display:none;
+      font-family:sans-serif; font-size:10px;
+      border-radius:4px; padding:2px 8px;
+      font-weight:bold; letter-spacing:.04em; white-space:nowrap;
+      border:2px solid currentColor;
+    }
+    #pen-on-badge.show { display:inline-block; }
+
+    .pen-btn {
+      width:23px; height:23px; border-radius:50%;
+      border:2.5px solid transparent; cursor:pointer;
+      transition:transform .15s, border-color .15s, box-shadow .15s; flex-shrink:0;
+    }
+    .pen-btn:hover { transform:scale(1.2); }
+    .pen-btn.active { border-color:#2c3e50; transform:scale(1.15); box-shadow:0 0 0 2px rgba(0,0,0,.12); }
+
+    .tb-btn {
+      font-family:sans-serif; font-size:11px; color:#555;
+      background:#fff; border:1px solid #d8d3cc; border-radius:4px;
+      padding:3px 8px; cursor:pointer; transition:background .15s, color .15s; flex-shrink:0; line-height:1.4;
+    }
+    .tb-btn:hover { background:#e8e4de; }
+    .tb-btn.active { background:#2c3e50; color:#fff; border-color:#2c3e50; }
+
+    .tb-select {
+      font-family:sans-serif; font-size:11px; color:#555;
+      background:#fff; border:1px solid #d8d3cc; border-radius:4px;
+      padding:3px 4px; cursor:pointer; outline:none; flex-shrink:0; max-width:100px;
+    }
+
+    /* ══ カラムラベル ══ */
+    #col-labels { display:flex; background:#f7f5f2; border-bottom:1px solid #e8e2da; font-family:sans-serif; font-size:9px; letter-spacing:.15em; color:#bbb; text-transform:uppercase; }
+    .cl-cue   { width:220px; border-right:2px solid #e8a0a0; padding:5px 12px; flex-shrink:0; }
+    .cl-notes { flex:1; padding:5px 12px; }
+
+    /* ══ 2カラム ══ */
+    #columns { display:flex; }
+    #col-cue   { width:220px; border-right:2px solid #e8a0a0; flex-shrink:0; }
+    #col-notes { flex:1; }
+
+    /* ══ 編集エリア ══ */
+    .edit-area {
+      min-height:400px; padding:12px 14px;
+      outline:none; font-family:Georgia,serif;
+      font-size:14px; line-height:1.8; color:#1e2e3e;
+      word-break:break-word; transition:background .2s;
+    }
+    #col-cue .edit-area { font-size:13px; min-height:195px; }
+    #area-summary.edit-area { min-height:90px; }
+    .edit-area.is-active { background:rgba(61,107,138,.04); }
+    .edit-area.pen-cursor { cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ctext y='16' font-size='16'%3E🖊%3C/text%3E%3C/svg%3E") 0 20, crosshair; }
+    .edit-area:empty::before { content:attr(data-placeholder); color:#c8cfd8; font-style:italic; pointer-events:none; white-space:pre-line; }
+
+    /* ══ サマリー ══ */
+    #summary-wrap { border-top:2px solid #e8a0a0; background:#fffdf9; }
+    #summary-label { font-family:sans-serif; font-size:9px; letter-spacing:.15em; color:#bbb; text-transform:uppercase; padding:5px 12px 0; border-bottom:1px solid #f0ebe4; }
+
+    /* ══ ヒント ══ */
+    #tips { max-width:940px; margin:16px auto 20px; display:flex; gap:12px; flex-wrap:wrap; }
+    .tip { background:#fff; border:1px solid #e0dbd4; border-radius:6px; padding:8px 12px; flex:1 1 130px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+    .tip-step { font-family:sans-serif; font-size:10px; color:#e8a0a0; font-weight:bold; margin-bottom:2px; }
+    .tip-desc { font-family:sans-serif; font-size:11px; color:#888; }
+
+    mark { border-radius:2px; padding:0 1px; }
+
+    /* ══ フッター ══ */
+    #footer {
+      max-width:940px; margin:8px auto 24px;
+      font-family:sans-serif; font-size:11px; color:#b0a898;
+      text-align:center; letter-spacing:.08em;
+    }
+    #footer strong { color:#8a9aaa; }
+    .footer-sep { margin:0 8px; }
+
+    /* キュー欄の内部ラベル・仕切り */
+    .cue-sublabel {
+      font-family:sans-serif; font-size:9px; letter-spacing:.13em; color:#b0a898;
+      text-transform:uppercase; padding:5px 12px 0; background:#faf8f5;
+      border-bottom:1px solid #ede8e2;
+    }
+    .cue-divider {
+      height:2px; background: repeating-linear-gradient(90deg, #e8a0a0 0, #e8a0a0 6px, transparent 6px, transparent 12px);
+      margin:0;
+    }
+
+    /* ══ 印刷用CSS ══ */
+    @media print {
+      body { background:#fff; }
+      #header, #sidebar, #sidebar-overlay, #toolbar, #tips, #tag-input-wrap { display:none !important; }
+      #layout { display:block; }
+      #main { padding:0; overflow:visible; }
+      #paper { box-shadow:none; border:none; max-width:100%; }
+      #note-head { background:#fff; }
+      .edit-area { min-height:0 !important; background:transparent !important; }
+      #columns { border:1px solid #ccc; }
+      #col-cue { border-right:1px solid #ccc; }
+      #summary-wrap { border-top:1px solid #ccc; }
+      .edit-area.is-active { background:transparent !important; }
+      #col-labels { display:flex; }
+    }
+
+    /* ══ モバイル ══ */
+    @media (max-width:700px) {
+      #main { padding:10px; }
+      #note-head { padding:10px 12px 10px; }
+      #col-labels { display:none; }
+      #columns { flex-direction:column; }
+      #col-cue { width:100%; border-right:none; border-bottom:2px solid #e8a0a0; }
+      #col-cue .edit-area, #col-notes .edit-area { min-height:200px; }
+      #toolbar-row1, #toolbar-row2 { gap:4px; padding:5px 8px; overflow-x:auto; flex-wrap:nowrap; }
+      #toolbar-row1::-webkit-scrollbar, #toolbar-row2::-webkit-scrollbar { height:2px; }
+      #sidebar { position:fixed; left:0; top:0; bottom:0; z-index:500; box-shadow:4px 0 16px rgba(0,0,0,.18); }
+      #sidebar.hidden { width:0; opacity:0; }
+      .hbtn { padding:5px 9px; font-size:11px; }
+      #col-notes::before { content:"② Notes / ノートエリア"; display:block; font-family:sans-serif; font-size:9px; letter-spacing:.15em; color:#bbb; text-transform:uppercase; padding:5px 12px 0; background:#f7f5f2; border-bottom:1px solid #e8e2da; }
+    }
+
+    /* モバイルオーバーレイ */
+    #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.3); z-index:499; }
+    @media (max-width:700px) { #sidebar-overlay.show { display:block; } }
+
+    /* ══ トップページ ══ */
+    #top-page {
+      position:fixed; inset:0; z-index:1000;
+      background:#f0ede8;
+      display:flex; align-items:flex-start; justify-content:center;
+      overflow-y:auto;
+      transition:opacity .5s ease, transform .5s ease;
+    }
+    #top-page.hide { opacity:0; transform:translateY(-10px); pointer-events:none; }
+
+    #top-inner {
+      display:flex; flex-direction:column; align-items:center;
+      padding:60px 24px 72px;
+      min-height:100vh; justify-content:center;
+      animation: fadeUp .7s cubic-bezier(.22,1,.36,1) both;
+      width:100%;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* 全体ラッパー（スパイラル＋表紙） */
+    #top-book {
+      max-width:340px; width:100%;
+      display:flex; align-items:stretch;
+      filter:drop-shadow(0 12px 32px rgba(0,0,0,.22)) drop-shadow(0 3px 8px rgba(0,0,0,.14));
+    }
+    /* スパイラル製本部分 */
+    #top-spine {
+      display:flex; flex-direction:column; justify-content:space-around; align-items:center;
+      width:28px; flex-shrink:0;
+      background:#d4cfc8;
+      border-radius:6px 0 0 6px;
+      padding:14px 0;
+      gap:0;
+    }
+    .spiral-ring {
+      width:18px; height:18px; border-radius:50%;
+      border:3px solid #2c3e50;
+      background:#e8e4de;
+      flex-shrink:0;
+    }
+
+    /* 表紙本体 */
+    #top-card {
+      flex:1;
+      background:#faf8f4;
+      border-radius:0 6px 6px 0;
+      overflow:hidden;
+      border:1px solid #ddd8d0;
+      border-left:none;
+      display:flex; flex-direction:column;
+    }
+    #top-card::before, #top-card::after { display:none; }
+
+    /* 表紙ヘッダー */
+    #top-card-head {
+      padding:28px 24px 18px;
+      background:#2c3e50;
+      border-bottom:2px solid #e8a0a0;
+      flex-shrink:0;
+    }
+    #top-icon { font-size:28px; line-height:1; margin-bottom:12px; display:block; }
+    #top-title {
+      font-family:Georgia, serif;
+      font-size:22px; font-weight:bold;
+      color:#f5f0e8; letter-spacing:.02em; line-height:1.2; margin-bottom:4px;
+    }
+    #top-subtitle {
+      font-family:-apple-system, sans-serif;
+      font-size:9px; color:rgba(255,255,255,.38);
+      letter-spacing:.2em; text-transform:uppercase;
+    }
+
+    /* 表紙ボディ */
+    #top-card-body {
+      padding:16px 24px 12px;
+      flex:1;
+      background:#faf8f4;
+    }
+    .cover-line {
+      height:1px; background:#e8a0a0; margin-bottom:16px; opacity:.35;
+    }
+    #top-recent { background:transparent; border:none; padding:0; margin-bottom:0; width:100%; box-shadow:none; }
+    #top-recent-label {
+      font-family:-apple-system,sans-serif; font-size:8px; color:#e8a0a0;
+      letter-spacing:.2em; text-transform:uppercase; margin-bottom:8px; font-weight:700;
+    }
+    .top-note-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:5px 0; border-bottom:1px solid #e8e4de;
+      cursor:pointer; transition:opacity .15s;
+    }
+    .top-note-row:last-child { border-bottom:none; }
+    .top-note-row:hover { opacity:.5; }
+    .top-note-row .tnr-title { font-family:Georgia,serif; font-size:12px; color:#2c3e50; }
+    .top-note-row .tnr-date  { font-family:-apple-system,sans-serif; font-size:9px; color:#bbb4a8; }
+    #top-empty { font-family:-apple-system,sans-serif; font-size:11px; color:#bbb4a8; font-style:italic; padding:4px 0; }
+
+    #top-quote {
+      font-family:Georgia,serif; font-size:10.5px; color:#9aaa9a;
+      font-style:italic; line-height:1.9; margin-top:12px;
+      border-left:2px solid #e8a0a0; padding-left:10px;
+    }
+    #top-quote span { font-size:9px; font-style:normal; display:block; margin-top:2px; color:#bbb4a8; }
+
+    /* フッター */
+    #top-card-foot {
+      padding:14px 24px 22px;
+      border-top:1px solid #e8e4de;
+      background:#f4f1ec;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    #top-start-btn {
+      background:#2c3e50; color:#f5f0e8;
+      border:none; border-radius:4px; padding:12px 0;
+      font-family:-apple-system,sans-serif; font-size:12px; font-weight:600;
+      letter-spacing:.04em; cursor:pointer;
+      transition:background .2s; width:100%;
+    }
+    #top-start-btn:hover { background:#3d5568; }
+    #top-new-btn {
+      background:transparent; color:#2c3e50;
+      border:1px solid #bbb4a8; border-radius:4px; padding:10px 0;
+      font-family:-apple-system,sans-serif; font-size:12px; font-weight:500;
+      cursor:pointer; transition:border-color .2s; width:100%;
+    }
+    #top-new-btn:hover { border-color:#2c3e50; }
+    #top-cal-btn {
+      background:transparent; color:#2c3e50;
+      border:1px solid #bbb4a8; border-radius:4px; padding:10px 0;
+      font-family:-apple-system,sans-serif; font-size:12px; font-weight:500;
+      cursor:pointer; transition:border-color .2s; width:100%;
+    }
+    #top-cal-btn:hover { border-color:#2c3e50; }
+
+    @media print { #top-page { display:none !important; } }
+    @media (max-width:700px) {
+      #top-inner { padding:40px 16px 48px; }
+      #top-spine { width:20px; }
+      .spiral-ring { width:14px; height:14px; }
+      #top-title { font-size:18px; }
+    }
+
+    /* ══ カレンダーページ ══ */
+    #cal-page {
+      display:none;
+      position:fixed; inset:0; z-index:999;
+      background:#faf8f4; overflow-y:auto;
+      animation: fadeUp .4s ease both;
+    }
+    #cal-page.show { display:flex; flex-direction:column; }
+    #cal-header {
+      background:#2c3e50; color:#f5f0e8;
+      padding:12px 24px; display:flex; align-items:center; justify-content:space-between;
+      flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,.2);
+    }
+    #cal-header .cal-title { font-family:Georgia,serif; font-size:17px; font-weight:bold; letter-spacing:.06em; }
+    #cal-back-btn {
+      background:rgba(255,255,255,.15); border:none; color:#f5f0e8;
+      border-radius:6px; padding:6px 14px; font-family:sans-serif; font-size:12px;
+      font-weight:bold; cursor:pointer; letter-spacing:.05em;
+      transition:background .15s;
+    }
+    #cal-back-btn:hover { background:rgba(255,255,255,.25); }
+    #cal-nav {
+      display:flex; align-items:center; gap:12px;
+    }
+    .cal-nav-btn {
+      background:rgba(255,255,255,.15); border:none; color:#f5f0e8;
+      border-radius:6px; padding:5px 12px; font-size:16px; cursor:pointer;
+      transition:background .15s;
+    }
+    .cal-nav-btn:hover { background:rgba(255,255,255,.25); }
+    #cal-month-label { font-family:sans-serif; font-size:14px; font-weight:bold; min-width:120px; text-align:center; }
+    #cal-body { flex:1; padding:24px; max-width:900px; width:100%; margin:0 auto; }
+    #cal-grid-wrap {
+      background:#fff; border-radius:8px; box-shadow:0 2px 16px rgba(0,0,0,.08);
+      border:1px solid #e0dbd4; overflow:hidden; margin-bottom:24px;
+    }
+    #cal-weekdays {
+      display:grid; grid-template-columns:repeat(7,1fr);
+      background:#f7f5f2; border-bottom:1px solid #e0dbd4;
+    }
+    .cal-wd {
+      font-family:sans-serif; font-size:10px; letter-spacing:.1em; color:#aaa;
+      text-align:center; padding:8px 0; text-transform:uppercase;
+    }
+    .cal-wd:first-child { color:#e88; }
+    .cal-wd:last-child  { color:#7ab; }
+    #cal-days { display:grid; grid-template-columns:repeat(7,1fr); }
+    .cal-cell {
+      min-height:88px; border-right:1px solid #f0ebe4; border-bottom:1px solid #f0ebe4;
+      padding:6px 7px; position:relative; transition:background .1s;
+      vertical-align:top;
+    }
+    .cal-cell:nth-child(7n) { border-right:none; }
+    .cal-cell.other-month { background:#faf8f6; }
+    .cal-cell.other-month .cal-day-num { color:#d0c8c0; }
+    .cal-cell.today { background:#f0f6ff; }
+    .cal-cell.today .cal-day-num {
+      background:#2c3e50; color:#fff; border-radius:50%;
+      width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+    }
+    .cal-cell.has-notes { cursor:pointer; }
+    .cal-cell.has-notes:hover { background:#f0f4f8; }
+    .cal-day-num {
+      font-family:sans-serif; font-size:12px; font-weight:bold; color:#5a6a7a;
+      margin-bottom:4px; width:22px; height:22px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .cal-cell:nth-child(7n+1) .cal-day-num { color:#e88; }
+    .cal-cell:nth-child(7n)   .cal-day-num { color:#7ab; }
+    .cal-note-chip {
+      font-family:sans-serif; font-size:10px;
+      background:#e8f0f8; color:#2c3e50; border-radius:3px;
+      padding:2px 5px; margin-bottom:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      cursor:pointer; transition:background .1s; display:block;
+      max-width:100%;
+    }
+    .cal-note-chip:hover { background:#c8ddf0; }
+    .cal-more { font-family:sans-serif; font-size:9px; color:#8899aa; padding:1px 3px; }
+
+    /* 日付クリック時の詳細パネル */
+    #cal-detail {
+      background:#fff; border-radius:8px; box-shadow:0 2px 16px rgba(0,0,0,.08);
+      border:1px solid #e0dbd4; padding:18px 22px; display:none;
+    }
+    #cal-detail.show { display:block; }
+    #cal-detail-date { font-family:Georgia,serif; font-size:16px; color:#2c3e50; font-weight:bold; margin-bottom:12px; border-bottom:1px solid #f0ebe4; padding-bottom:8px; }
+    .cal-detail-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:8px 10px; border-radius:6px; cursor:pointer; transition:background .1s;
+      border-bottom:1px solid #f7f5f2;
+    }
+    .cal-detail-row:last-child { border-bottom:none; }
+    .cal-detail-row:hover { background:#f0f4f8; }
+    .cal-detail-title { font-family:Georgia,serif; font-size:14px; color:#2c3e50; }
+    .cal-detail-topic { font-family:sans-serif; font-size:11px; color:#aaa; }
+    .cal-detail-open { font-family:sans-serif; font-size:11px; color:#3d6b8a; font-weight:bold; }
+
+    @media (max-width:700px) {
+      #cal-body { padding:12px; }
+      .cal-cell { min-height:54px; padding:4px; }
+      .cal-note-chip { font-size:8px; padding:1px 3px; }
+      #cal-month-label { font-size:12px; min-width:90px; }
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ══ トップページ ══ -->
+<div id="top-page">
+  <div id="top-inner">
+    <div id="top-book">
+      <!-- スパイラル製本 -->
+      <div id="top-spine">
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+        <div class="spiral-ring"></div>
+      </div>
+      <!-- 表紙 -->
+      <div id="top-card">
+        <div id="top-card-head">
+          <div id="top-icon">📓</div>
+          <div id="top-title">Cornell Notes</div>
+          <div id="top-subtitle">コーネル式ノート</div>
+        </div>
+        <div id="top-card-body">
+          <div class="cover-line"></div>
+          <div class="cover-line"></div>
+          <div class="cover-line"></div>
+          <div id="top-recent">
+            <div id="top-recent-label">最近のノート</div>
+            <div id="top-recent-list"></div>
+          </div>
+          <div id="top-quote">
+            「学びて思わざれば則ち罔し、思いて学ばざれば則ち殆し。」
+            <span>— 孔子『論語』</span>
+          </div>
+        </div>
+        <div id="top-card-foot">
+          <button id="top-start-btn">ノートを開く　→</button>
+          <button id="top-cal-btn">📅 カレンダーで見る</button>
+          <button id="top-new-btn">＋ 新しいノートを作る</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ カレンダーページ ══ -->
+<div id="cal-page">
+  <div id="cal-header">
+    <button id="cal-back-btn">← 戻る</button>
+    <div class="cal-title">📅 ノートカレンダー</div>
+    <div id="cal-nav">
+      <button class="cal-nav-btn" id="cal-prev">‹</button>
+      <div id="cal-month-label"></div>
+      <button class="cal-nav-btn" id="cal-next">›</button>
+    </div>
+  </div>
+  <div id="cal-body">
+    <div id="cal-grid-wrap">
+      <div id="cal-weekdays">
+        <div class="cal-wd">日</div><div class="cal-wd">月</div>
+        <div class="cal-wd">火</div><div class="cal-wd">水</div>
+        <div class="cal-wd">木</div><div class="cal-wd">金</div>
+        <div class="cal-wd">土</div>
+      </div>
+      <div id="cal-days"></div>
+    </div>
+    <div id="cal-detail">
+      <div id="cal-detail-date"></div>
+      <div id="cal-detail-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ヘッダー -->
+<div id="header">
+  <div class="logo">
+    <button id="sidebar-toggle" style="background:none;border:none;color:#f5f0e8;font-size:20px;cursor:pointer;opacity:.7;padding:2px 6px;line-height:1;">☰</button>
+    <span style="font-size:22px;">📓</span>
+    <div>
+      <div class="logo-title">Cornell Notes</div>
+      <div class="logo-sub">コーネル式ノート</div>
+    </div>
+  </div>
+  <div class="actions">
+    <span id="save-status">自動保存: ON</span>
+    <button class="hbtn hbtn-home" id="home-btn">🏠 ホーム</button>
+    <button class="hbtn hbtn-add" id="add-btn">＋ 新規</button>
+    <button class="hbtn hbtn-print" id="print-btn">🖨 印刷/PDF</button>
+    <button class="hbtn hbtn-save" id="save-btn">💾 保存</button>
+  </div>
+</div>
+
+<div id="sidebar-overlay"></div>
+
+<div id="layout">
+  <!-- サイドバー -->
+  <div id="sidebar">
+    <!-- サイドバーヘッダー -->
+    <div id="sidebar-header">
+      <span id="sidebar-header-label">📋 ノート一覧</span>
+      <button id="sidebar-close-btn" title="閉じる">×</button>
+    </div>
+    <!-- 検索 -->
+    <div id="search-wrap">
+      <input id="search-input" type="text" placeholder="🔍 ノートを検索…" />
+    </div>
+    <!-- タグフィルター -->
+    <div id="tag-filter-wrap">
+      <span id="tag-filter-label">タグで絞込</span>
+    </div>
+    <div class="sidebar-title" id="sidebar-count">ノート一覧</div>
+    <div id="note-list"></div>
+  </div>
+
+  <!-- メイン -->
+  <div id="main">
+    <div id="paper">
+
+      <!-- ノートヘッダー -->
+      <div id="note-head">
+        <div style="flex:1;min-width:200px;">
+          <label class="flabel">Title / タイトル</label>
+          <input class="finput" id="field-title" style="font-size:20px;font-weight:bold;" placeholder="ノートのタイトル"/>
+        </div>
+        <div>
+          <label class="flabel">Date / 日付</label>
+          <input class="finput" id="field-date" style="font-family:sans-serif;font-size:12px;color:#999;width:110px;" />
+        </div>
+        <div style="min-width:150px;">
+          <label class="flabel">Topic / トピック</label>
+          <input class="finput" id="field-topic" style="font-size:13px;color:#666;" placeholder="科目・テーマ"/>
+        </div>
+        <!-- タグ -->
+        <div id="tag-input-wrap">
+          <span id="tag-input-label">🏷 タグ</span>
+          <div id="tag-badges"></div>
+          <input id="tag-input" type="text" placeholder="タグを入力してEnter"/>
+        </div>
+      </div>
+
+      <!-- ツールバー -->
+      <div id="toolbar">
+        <!-- ペンONインジケーターバー -->
+        <div id="pen-indicator"></div>
+
+        <!-- 行1：エリア表示 ／ ペン ／ 文字色 ／ 書式 ／ Undo/Redo -->
+        <div id="toolbar-row1">
+          <span id="active-area-label">エリアを選択</span>
+          <span id="pen-on-badge"></span>
+
+          <div class="tb-sep"></div>
+          <span class="tb-label">蛍光</span>
+          <button class="pen-btn" data-mode="highlight" data-color="#ffe066" data-label="🟡黄" style="background:#ffe066;" title="黄マーカー"></button>
+          <button class="pen-btn" data-mode="highlight" data-color="#a8f0c0" data-label="🟢緑" style="background:#a8f0c0;" title="緑マーカー"></button>
+          <button class="pen-btn" data-mode="highlight" data-color="#f0a8c8" data-label="🩷ピンク" style="background:#f0a8c8;" title="ピンクマーカー"></button>
+          <button class="pen-btn" data-mode="highlight" data-color="#a8d8f0" data-label="🔵水色" style="background:#a8d8f0;" title="水色マーカー"></button>
+          <button class="pen-btn" data-mode="highlight" data-color="#d4b8f0" data-label="🟣紫" style="background:#d4b8f0;" title="紫マーカー"></button>
+          <button class="pen-btn" data-mode="highlight" data-color="#f0d0a8" data-label="🟠橙" style="background:#f0d0a8;" title="オレンジマーカー"></button>
+
+          <button class="tb-btn" id="btn-pen-off" title="ペンをOFFにする" style="color:#888;">🖊 OFF</button>
+          <div class="tb-sep"></div>
+          <span class="tb-label">色</span>
+          <button class="pen-btn" data-mode="color" data-color="#c0392b" data-label="🔴赤" style="background:#c0392b;" title="赤文字"></button>
+          <button class="pen-btn" data-mode="color" data-color="#2471a3" data-label="🔵青" style="background:#2471a3;" title="青文字"></button>
+          <button class="pen-btn" data-mode="color" data-color="#1e8449" data-label="🟢緑" style="background:#1e8449;" title="緑文字"></button>
+          <button class="pen-btn" data-mode="color" data-color="#884ea0" data-label="🟣紫" style="background:#884ea0;" title="紫文字"></button>
+
+          <div class="tb-sep"></div>
+          <button class="tb-btn" id="btn-bold"      title="太字 Ctrl+B"><b>B</b></button>
+          <button class="tb-btn" id="btn-italic"    title="斜体 Ctrl+I"><i>I</i></button>
+          <button class="tb-btn" id="btn-underline" title="下線 Ctrl+U"><u>U</u></button>
+
+          <div class="tb-sep"></div>
+          <button class="tb-btn" id="btn-undo" title="元に戻す Ctrl+Z">↩</button>
+          <button class="tb-btn" id="btn-redo" title="やり直す Ctrl+Y">↪</button>
+
+          <div class="tb-sep"></div>
+          <button class="tb-btn" id="btn-clear" style="color:#c0392b;" title="書式クリア">✕ クリア</button>
+        </div>
+
+        <!-- 行2：サイズ ／ スタイル ／ リスト ／ 配置 -->
+        <div id="toolbar-row2">
+          <span class="tb-label">サイズ</span>
+          <select class="tb-select" id="size-select" title="文字サイズ">
+            <option value="">―</option>
+            <option value="1">極小</option>
+            <option value="2">小</option>
+            <option value="3">標準</option>
+            <option value="4">大</option>
+            <option value="5">特大</option>
+            <option value="6">最大</option>
+          </select>
+
+          <span class="tb-label">スタイル</span>
+          <select class="tb-select" id="block-select" title="段落スタイル">
+            <option value="">―</option>
+            <option value="h2">見出し1</option>
+            <option value="h3">見出し2</option>
+            <option value="h4">見出し3</option>
+            <option value="p">本文</option>
+            <option value="blockquote">引用</option>
+          </select>
+
+          <div class="tb-sep"></div>
+          <span class="tb-label">リスト</span>
+          <button class="tb-btn" id="btn-ul" title="箇条書き">• リスト</button>
+          <button class="tb-btn" id="btn-ol" title="番号付きリスト">1. リスト</button>
+
+          <div class="tb-sep"></div>
+          <span class="tb-label">配置</span>
+          <button class="tb-btn" id="btn-left"   title="左揃え">≡</button>
+          <button class="tb-btn" id="btn-center" title="中央揃え">≡̄</button>
+          <button class="tb-btn" id="btn-right"  title="右揃え">≡</button>
+
+          <div class="tb-sep"></div>
+          <button class="tb-btn" id="btn-plain-paste" title="ONにすると貼り付け時に書式を自動除去します（Wordの『テキストのみ保持』と同じ）">📋 書式なし貼付: OFF</button>
+        </div>
+      </div>
+
+      <!-- カラムラベル -->
+      <div id="col-labels">
+        <div class="cl-cue">① Cue / キュー欄（上:キーワード / 下:メモ）</div>
+        <div class="cl-notes">② Notes / ノートエリア</div>
+      </div>
+
+      <!-- 2カラム -->
+      <div id="columns">
+        <div id="col-cue">
+          <div class="cue-sublabel">🔑 キーワード</div>
+          <div class="edit-area" id="area-cue-keywords" contenteditable="true"
+            data-placeholder="重要なキーワード&#10;・用語の定義&#10;・テストに出そうな語句"></div>
+          <div class="cue-divider"></div>
+          <div class="cue-sublabel">📝 メモ・質問</div>
+          <div class="edit-area" id="area-cue-memo" contenteditable="true"
+            data-placeholder="疑問点・補足メモ&#10;・主題は何か？&#10;・なぜ重要か？"></div>
+        </div>
+        <div id="col-notes">
+          <div class="edit-area" id="area-notes" contenteditable="true"
+            data-placeholder="授業・読書中にメモを取ります。&#10;&#10;• 重要なポイントを箇条書きに&#10;• 図や例を書き留める&#10;• 略語を使って速く書く"></div>
+        </div>
+      </div>
+
+      <!-- サマリー -->
+      <div id="summary-wrap">
+        <div id="summary-label">③ Summary / サマリーエリア</div>
+        <div class="edit-area" id="area-summary" contenteditable="true"
+          data-placeholder="授業・学習の後に、このページの内容を2〜3文で要約します。自分の言葉でまとめることで理解が深まります。"></div>
+      </div>
+    </div><!-- /#paper -->
+
+    <!-- ヒント -->
+    <div id="tips">
+      <div class="tip"><div class="tip-step">① ノートを取る</div><div class="tip-desc">右欄に授業・読書中のメモ</div></div>
+      <div class="tip"><div class="tip-step">② キューを書く</div><div class="tip-desc">左欄にキーワード・質問を追加</div></div>
+      <div class="tip"><div class="tip-step">③ 振り返る</div><div class="tip-desc">ノートを隠して左欄だけ見て復習</div></div>
+      <div class="tip"><div class="tip-step">④ 要約する</div><div class="tip-desc">下欄に自分の言葉でまとめる</div></div>
+    </div>
+
+    <!-- フッター -->
+    <div id="footer">
+      <span>Designed &amp; Built by <strong>Masahiro</strong> &amp; <strong>Claude</strong></span>
+      <span class="footer-sep">·</span>
+      <span>Cornell Notes App</span>
+    </div>
+  </div>
+</div><!-- /#layout -->
+
+<script>
+/* ══════════════════════════════════════
+   ユーティリティ
+══════════════════════════════════════ */
+const STORAGE_KEY = "cornell-notes-v5";
+const AREA_LABELS = { "area-cue-keywords":"① キーワード", "area-cue-memo":"① メモ・質問", "area-notes":"② ノートエリア", "area-summary":"③ サマリー" };
+const $ = id => document.getElementById(id);
+const today = () => new Date().toLocaleDateString("ja-JP");
+
+const loadAll = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; } };
+const saveAll = () => { localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes:state.notes, activeId:state.activeId })); };
+
+/* ══════════════════════════════════════
+   状態
+══════════════════════════════════════ */
+const state = { notes:[], activeId:null, nextId:1 };
+let lastAreaId = "area-notes";
+let activePen  = null;
+let autoTimer  = null;
+let searchQ    = "";
+let tagFilter  = null;
+
+const activeNote = () => state.notes.find(n => n.id === state.activeId);
+
+/* ══════════════════════════════════════
+   初期化
+══════════════════════════════════════ */
+function initState() {
+  const data = loadAll();
+  if (data?.notes?.length) {
+    state.notes    = data.notes;
+    state.activeId = data.activeId || data.notes[0].id;
+    state.nextId   = Math.max(...data.notes.map(n => n.id)) + 1;
+  } else {
+    const note = { id:1, title:"はじめてのノート", date:today(), topic:"", tags:[], cueKeywords:"", cueMemo:"", notes:"", summary:"" };
+    state.notes = [note]; state.activeId = 1; state.nextId = 2;
+  }
+  // tagsがないノートに空配列を追加（旧データ互換）
+  state.notes.forEach(n => { if (!n.tags) n.tags = []; });
+}
+
+/* ══════════════════════════════════════
+   データ ⇆ 画面
+══════════════════════════════════════ */
+function flushActive() {
+  const n = activeNote(); if (!n) return;
+  n.cueKeywords = $("area-cue-keywords").innerHTML;
+  n.cueMemo     = $("area-cue-memo").innerHTML;
+  n.notes   = $("area-notes").innerHTML;
+  n.summary = $("area-summary").innerHTML;
+  n.title   = $("field-title").value;
+  n.topic   = $("field-topic").value;
+  n.date    = $("field-date").value;
+}
+
+function renderNote() {
+  const n = activeNote(); if (!n) return;
+  $("area-cue-keywords").innerHTML = n.cueKeywords || "";
+  $("area-cue-memo").innerHTML     = n.cueMemo     || "";
+  $("area-notes").innerHTML   = n.notes   || "";
+  $("area-summary").innerHTML = n.summary || "";
+  $("field-title").value      = n.title;
+  $("field-topic").value      = n.topic;
+  $("field-date").value       = n.date;
+  renderTagBadges(n.tags || []);
+}
+
+/* ══════════════════════════════════════
+   タグ
+══════════════════════════════════════ */
+function renderTagBadges(tags) {
+  const wrap = $("tag-badges");
+  wrap.innerHTML = "";
+  tags.forEach(tag => {
+    const badge = document.createElement("span");
+    badge.className = "tag-badge";
+    badge.innerHTML = `${escHtml(tag)}<span class="tag-x" data-tag="${escHtml(tag)}" title="削除">×</span>`;
+    badge.querySelector(".tag-x").addEventListener("click", () => removeTag(tag));
+    wrap.appendChild(badge);
+  });
+}
+
+function addTag(tag) {
+  tag = tag.trim().replace(/[,，　]/g,"");
+  if (!tag) return;
+  const n = activeNote(); if (!n) return;
+  if (!n.tags.includes(tag)) { n.tags.push(tag); renderTagBadges(n.tags); renderSidebar(); scheduleAutoSave(); }
+}
+function removeTag(tag) {
+  const n = activeNote(); if (!n) return;
+  n.tags = n.tags.filter(t => t !== tag);
+  renderTagBadges(n.tags); renderSidebar(); scheduleAutoSave();
+}
+
+$("tag-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" || e.key === "," || e.key === "　") {
+    e.preventDefault(); addTag($("tag-input").value); $("tag-input").value = "";
+  }
+  if (e.key === "Backspace" && !$("tag-input").value) {
+    const n = activeNote();
+    if (n && n.tags.length) { removeTag(n.tags[n.tags.length - 1]); }
+  }
+});
+
+function getAllTags() {
+  const set = new Set();
+  state.notes.forEach(n => (n.tags||[]).forEach(t => set.add(t)));
+  return [...set];
+}
+
+function renderTagFilter() {
+  const wrap = $("tag-filter-wrap");
+  wrap.innerHTML = `<span id="tag-filter-label">タグで絞込</span>`;
+  const tags = getAllTags();
+  if (!tags.length) return;
+  tags.forEach(tag => {
+    const chip = document.createElement("span");
+    chip.className = "tag-chip-filter" + (tagFilter === tag ? " active" : "");
+    chip.textContent = tag;
+    chip.addEventListener("click", () => {
+      tagFilter = tagFilter === tag ? null : tag;
+      renderSidebar();
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+/* ══════════════════════════════════════
+   サイドバー
+══════════════════════════════════════ */
+function renderSidebar() {
+  renderTagFilter();
+  const list = $("note-list");
+  list.innerHTML = "";
+
+  const q = searchQ.toLowerCase();
+  let visible = state.notes.filter(n => {
+    if (tagFilter && !(n.tags||[]).includes(tagFilter)) return false;
+    if (!q) return true;
+    return n.title.toLowerCase().includes(q)
+        || (n.topic||"").toLowerCase().includes(q)
+        || stripHtml(n.cueKeywords||"").toLowerCase().includes(q)
+        || stripHtml(n.cueMemo||"").toLowerCase().includes(q)
+        || stripHtml(n.notes||"").toLowerCase().includes(q)
+        || stripHtml(n.summary||"").toLowerCase().includes(q)
+        || (n.tags||[]).some(t => t.toLowerCase().includes(q));
+  });
+
+  $("sidebar-count").textContent = `ノート一覧 (${visible.length}/${state.notes.length})`;
+
+  visible.forEach(n => {
+    const item = document.createElement("div");
+    item.className = "note-item" + (n.id === state.activeId ? " active" : "");
+
+    const title = document.createElement("div");
+    title.className = "nt";
+    title.textContent = n.title || "無題";
+
+    const date = document.createElement("div");
+    date.className = "nd";
+    date.textContent = n.date + (n.topic ? " · " + n.topic : "");
+
+    item.appendChild(title); item.appendChild(date);
+
+    if ((n.tags||[]).length) {
+      const tagWrap = document.createElement("div");
+      tagWrap.className = "ntags";
+      n.tags.forEach(t => {
+        const chip = document.createElement("span");
+        chip.className = "tag-chip"; chip.textContent = t;
+        tagWrap.appendChild(chip);
+      });
+      item.appendChild(tagWrap);
+    }
+
+    if (state.notes.length > 1) {
+      const del = document.createElement("button");
+      del.className = "del"; del.textContent = "×"; del.title = "削除";
+      del.addEventListener("click", e => { e.stopPropagation(); deleteNote(n.id); });
+      item.appendChild(del);
+    }
+
+    item.addEventListener("click", () => switchNote(n.id));
+    list.appendChild(item);
+  });
+}
+
+/* ══════════════════════════════════════
+   ノート操作
+══════════════════════════════════════ */
+function switchNote(id) {
+  flushActive(); state.activeId = id;
+  renderNote(); renderSidebar(); closeSidebarMobile();
+}
+function addNote() {
+  flushActive();
+  const id = state.nextId++;
+  state.notes.push({ id, title:`ノート ${id}`, date:today(), topic:"", tags:[], cueKeywords:"", cueMemo:"", notes:"", summary:"" });
+  state.activeId = id;
+  renderNote(); renderSidebar();
+}
+function deleteNote(id) {
+  if (state.notes.length === 1) return;
+  state.notes = state.notes.filter(n => n.id !== id);
+  if (state.activeId === id) state.activeId = state.notes[0].id;
+  renderNote(); renderSidebar(); saveAll();
+}
+
+/* ══════════════════════════════════════
+   自動保存 ／ 保存表示
+══════════════════════════════════════ */
+function scheduleAutoSave() {
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => { flushActive(); saveAll(); }, 1200);
+}
+function showSaved() {
+  const s = $("save-status"), b = $("save-btn");
+  s.textContent = "✓ 保存しました"; s.classList.add("ok");
+  b.textContent = "✓ 保存済み";    b.classList.add("ok");
+  setTimeout(() => { s.textContent = "自動保存: ON"; s.classList.remove("ok"); b.textContent = "💾 保存"; b.classList.remove("ok"); }, 2000);
+}
+
+/* ══════════════════════════════════════
+   アクティブエリア
+══════════════════════════════════════ */
+function setActiveArea(areaId) {
+  lastAreaId = areaId;
+  $("active-area-label").textContent = AREA_LABELS[areaId] || "エリアを選択";
+  document.querySelectorAll(".edit-area").forEach(el => el.classList.remove("is-active"));
+  $(areaId).classList.add("is-active");
+}
+
+/* ══════════════════════════════════════
+   ペン機能
+══════════════════════════════════════ */
+function updatePenUI() {
+  const badge = $("pen-on-badge");
+  const ind   = $("pen-indicator");
+  if (activePen) {
+    badge.textContent = `🖊 ${activePen.label} ON`;
+    badge.style.color       = activePen.mode === "color" ? activePen.color : "#555";
+    badge.style.borderColor = activePen.color;
+    badge.style.background  = activePen.mode === "highlight" ? activePen.color + "55" : "transparent";
+    badge.classList.add("show");
+    ind.style.background = activePen.color;
+    // カーソル変更
+    document.querySelectorAll(".edit-area").forEach(el => el.classList.add("pen-cursor"));
+  } else {
+    badge.classList.remove("show");
+    ind.style.background = "transparent";
+    document.querySelectorAll(".edit-area").forEach(el => el.classList.remove("pen-cursor"));
+  }
+}
+
+document.querySelectorAll(".pen-btn").forEach(btn => {
+  btn.addEventListener("mousedown", e => {
+    e.preventDefault();
+    const mode  = btn.dataset.mode;
+    const color = btn.dataset.color;
+    const label = btn.dataset.label || "";
+
+    if (activePen && activePen.mode === mode && activePen.color === color) {
+      activePen = null;
+      document.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("active"));
+      updatePenUI(); return;
+    }
+    activePen = { mode, color, label };
+    document.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    updatePenUI();
+
+    // ペン先モード：フォーカスして色をセット（以後の入力にも適用）
+    const area = $(lastAreaId);
+    if (area) {
+      area.focus();
+      if (mode === "highlight") document.execCommand("backColor", false, color);
+      else                      document.execCommand("foreColor", false, color);
+    }
+  });
+});
+
+function applyPenOnSelection() {
+  if (!activePen) return;
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+  if (activePen.mode === "highlight") document.execCommand("backColor", false, activePen.color);
+  else                                document.execCommand("foreColor", false, activePen.color);
+  scheduleAutoSave();
+}
+
+/* ══════════════════════════════════════
+   編集エリアイベント
+══════════════════════════════════════ */
+["area-cue-keywords","area-cue-memo","area-notes","area-summary"].forEach(id => {
+  const area = $(id);
+  area.addEventListener("focus",   () => setActiveArea(id));
+  area.addEventListener("mouseup",  applyPenOnSelection);
+  area.addEventListener("keyup",    applyPenOnSelection);
+  area.addEventListener("input",    scheduleAutoSave);
+});
+
+/* ══════════════════════════════════════
+   ツールバーコマンド
+══════════════════════════════════════ */
+function tbCmd(cmd, val) {
+  $(lastAreaId)?.focus();
+  document.execCommand(cmd, false, val || null);
+  scheduleAutoSave();
+}
+
+$("btn-bold").addEventListener("mousedown",      e => { e.preventDefault(); tbCmd("bold"); });
+$("btn-italic").addEventListener("mousedown",    e => { e.preventDefault(); tbCmd("italic"); });
+$("btn-underline").addEventListener("mousedown", e => { e.preventDefault(); tbCmd("underline"); });
+$("btn-undo").addEventListener("mousedown",      e => { e.preventDefault(); tbCmd("undo"); });
+$("btn-redo").addEventListener("mousedown",      e => { e.preventDefault(); tbCmd("redo"); });
+$("btn-ul").addEventListener("mousedown",        e => { e.preventDefault(); tbCmd("insertUnorderedList"); });
+$("btn-ol").addEventListener("mousedown",        e => { e.preventDefault(); tbCmd("insertOrderedList"); });
+$("btn-left").addEventListener("mousedown",      e => { e.preventDefault(); tbCmd("justifyLeft"); });
+$("btn-center").addEventListener("mousedown",    e => { e.preventDefault(); tbCmd("justifyCenter"); });
+$("btn-right").addEventListener("mousedown",     e => { e.preventDefault(); tbCmd("justifyRight"); });
+
+$("btn-pen-off").addEventListener("mousedown", e => {
+  e.preventDefault();
+  activePen = null;
+  document.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("active"));
+  updatePenUI();
+  $(lastAreaId)?.focus();
+  document.execCommand("foreColor", false, "#1e2e3e");
+  document.execCommand("backColor", false, "transparent");
+});
+
+$("btn-clear").addEventListener("mousedown", e => {
+  e.preventDefault();
+  $(lastAreaId)?.focus();
+  document.execCommand("removeFormat");
+  const area = $(lastAreaId);
+  if (area) area.querySelectorAll("mark").forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+  activePen = null;
+  document.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("active"));
+  updatePenUI(); scheduleAutoSave();
+});
+
+$("size-select").addEventListener("change", function() {
+  if (!this.value) return;
+  $(lastAreaId)?.focus();
+  document.execCommand("fontSize", false, this.value);
+  this.value = ""; scheduleAutoSave();
+});
+$("block-select").addEventListener("change", function() {
+  if (!this.value) return;
+  $(lastAreaId)?.focus();
+  document.execCommand("formatBlock", false, this.value);
+  this.value = ""; scheduleAutoSave();
+});
+
+/* ══════════════════════════════════════
+   フィールド入力
+══════════════════════════════════════ */
+$("field-title").addEventListener("input", () => {
+  const n = activeNote(); if (n) n.title = $("field-title").value;
+  renderSidebar(); scheduleAutoSave();
+});
+$("field-topic").addEventListener("input", scheduleAutoSave);
+$("field-date").addEventListener("input", () => {
+  const n = activeNote(); if (n) n.date = $("field-date").value;
+  renderSidebar(); scheduleAutoSave();
+});
+
+/* ══════════════════════════════════════
+   検索
+══════════════════════════════════════ */
+$("search-input").addEventListener("input", function() {
+  searchQ = this.value;
+  renderSidebar();
+});
+
+/* ══════════════════════════════════════
+   印刷
+══════════════════════════════════════ */
+$("print-btn").addEventListener("click", () => {
+  flushActive(); window.print();
+});
+
+/* ══════════════════════════════════════
+   サイドバー切替
+══════════════════════════════════════ */
+function closeSidebarMobile() {
+  if (window.innerWidth <= 700) {
+    $("sidebar").classList.add("hidden");
+    $("sidebar-overlay").classList.remove("show");
+  }
+}
+$("sidebar-toggle").addEventListener("click", () => {
+  const sb = $("sidebar");
+  const hidden = sb.classList.toggle("hidden");
+  if (window.innerWidth <= 700) $("sidebar-overlay").classList.toggle("show", !hidden);
+});
+$("sidebar-overlay").addEventListener("click", closeSidebarMobile);
+
+/* ══════════════════════════════════════
+   ヘッダーボタン
+══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   書式なし貼り付けモード
+══════════════════════════════════════ */
+let plainPasteMode = false;
+
+$("btn-plain-paste").addEventListener("click", () => {
+  plainPasteMode = !plainPasteMode;
+  const btn = $("btn-plain-paste");
+  if (plainPasteMode) {
+    btn.textContent = "📋 書式なし貼付: ON";
+    btn.classList.add("active");
+  } else {
+    btn.textContent = "📋 書式なし貼付: OFF";
+    btn.classList.remove("active");
+  }
+});
+
+// 全編集エリアのペーストを監視
+["area-cue-keywords","area-cue-memo","area-notes","area-summary"].forEach(id => {
+  $(id).addEventListener("paste", e => {
+    if (!plainPasteMode) return;
+    e.preventDefault();
+    // プレーンテキストのみ取得して挿入
+    const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, text);
+    scheduleAutoSave();
+  });
+});
+
+$("sidebar-close-btn").addEventListener("click", () => {
+  $("sidebar").classList.add("hidden");
+  if (window.innerWidth <= 700) $("sidebar-overlay").classList.remove("show");
+});
+
+$("add-btn").addEventListener("click",  addNote);
+$("save-btn").addEventListener("click", () => { flushActive(); saveAll(); showSaved(); });
+$("home-btn").addEventListener("click", () => {
+  flushActive(); saveAll();
+  renderTopRecent();
+  $("top-page").style.display = "flex";
+  $("top-page").classList.remove("hide");
+});
+
+/* ══════════════════════════════════════
+   ヘルパー
+══════════════════════════════════════ */
+function stripHtml(html) { const d = document.createElement("div"); d.innerHTML = html; return d.textContent || ""; }
+function escHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* ══════════════════════════════════════
+   初期描画
+══════════════════════════════════════ */
+initState();
+renderNote();
+renderSidebar();
+if (window.innerWidth > 700) $("sidebar").classList.remove("hidden");
+
+/* ══════════════════════════════════════
+   トップページ
+══════════════════════════════════════ */
+function renderTopRecent() {
+  const list = $("top-recent-list");
+  const recent = [...state.notes].reverse().slice(0, 4);
+  if (!recent.length) {
+    list.innerHTML = `<div id="top-empty">まだノートがありません</div>`;
+    return;
+  }
+  list.innerHTML = "";
+  recent.forEach(n => {
+    const row = document.createElement("div");
+    row.className = "top-note-row";
+    row.innerHTML = `<span class="tnr-title">${escHtml(n.title || "無題")}</span><span class="tnr-date">${n.date}</span>`;
+    row.addEventListener("click", () => {
+      switchNote(n.id);
+      closeTOP();
+    });
+    list.appendChild(row);
+  });
+}
+
+function closeTOP() {
+  $("top-page").classList.add("hide");
+  setTimeout(() => { $("top-page").style.display = "none"; }, 520);
+}
+
+renderTopRecent();
+$("top-start-btn").addEventListener("click", closeTOP);
+$("top-new-btn").addEventListener("click", () => { addNote(); closeTOP(); });
+$("top-cal-btn").addEventListener("click", openCalendar);
+
+/* ══════════════════════════════════════
+   カレンダー
+══════════════════════════════════════ */
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+
+function notesByDate() {
+  const map = {};
+  state.notes.forEach(n => {
+    const d = n.date; // "YYYY/M/D" or "YYYY/MM/DD"
+    if (!map[d]) map[d] = [];
+    map[d].push(n);
+  });
+  return map;
+}
+
+function formatDateKey(y, m, d) {
+  // ja-JP形式 "YYYY/M/D" に合わせる
+  return `${y}/${m+1}/${d}`;
+}
+
+function renderCalendar() {
+  const map = notesByDate();
+  const label = `${calYear}年 ${calMonth+1}月`;
+  $("cal-month-label").textContent = label;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const lastDate = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+  const todayKey = formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const grid = $("cal-days");
+  grid.innerHTML = "";
+
+  // 前月の埋め
+  const prevLast = new Date(calYear, calMonth, 0).getDate();
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const cell = document.createElement("div");
+    cell.className = "cal-cell other-month";
+    const num = document.createElement("div");
+    num.className = "cal-day-num";
+    num.textContent = prevLast - i;
+    cell.appendChild(num);
+    grid.appendChild(cell);
+  }
+
+  // 当月
+  for (let d = 1; d <= lastDate; d++) {
+    const key = formatDateKey(calYear, calMonth, d);
+    const notes = map[key] || [];
+    const cell = document.createElement("div");
+    cell.className = "cal-cell" + (key === todayKey ? " today" : "") + (notes.length ? " has-notes" : "");
+
+    const num = document.createElement("div");
+    num.className = "cal-day-num";
+    num.textContent = d;
+    cell.appendChild(num);
+
+    // ノートチップ（最大3件）
+    notes.slice(0, 3).forEach(n => {
+      const chip = document.createElement("span");
+      chip.className = "cal-note-chip";
+      chip.textContent = n.title || "無題";
+      chip.title = n.title || "無題";
+      chip.addEventListener("click", e => {
+        e.stopPropagation();
+        switchNote(n.id);
+        closeCalendar();
+        closeTOP();
+      });
+      cell.appendChild(chip);
+    });
+    if (notes.length > 3) {
+      const more = document.createElement("div");
+      more.className = "cal-more";
+      more.textContent = `+${notes.length - 3}件`;
+      cell.appendChild(more);
+    }
+
+    // セルクリックで詳細パネル
+    if (notes.length) {
+      cell.addEventListener("click", () => showCalDetail(key, notes));
+    }
+
+    grid.appendChild(cell);
+  }
+
+  // 次月の埋め
+  const cells = firstDay + lastDate;
+  const remainder = cells % 7 === 0 ? 0 : 7 - (cells % 7);
+  for (let d = 1; d <= remainder; d++) {
+    const cell = document.createElement("div");
+    cell.className = "cal-cell other-month";
+    const num = document.createElement("div");
+    num.className = "cal-day-num";
+    num.textContent = d;
+    cell.appendChild(num);
+    grid.appendChild(cell);
+  }
+
+  // 詳細パネル非表示
+  $("cal-detail").classList.remove("show");
+}
+
+function showCalDetail(dateKey, notes) {
+  const detail = $("cal-detail");
+  $("cal-detail-date").textContent = `📅 ${dateKey} のノート（${notes.length}件）`;
+  const list = $("cal-detail-list");
+  list.innerHTML = "";
+  notes.forEach(n => {
+    const row = document.createElement("div");
+    row.className = "cal-detail-row";
+    row.innerHTML = `
+      <div>
+        <div class="cal-detail-title">${escHtml(n.title || "無題")}</div>
+        ${n.topic ? `<div class="cal-detail-topic">${escHtml(n.topic)}</div>` : ""}
+      </div>
+      <span class="cal-detail-open">開く →</span>
+    `;
+    row.addEventListener("click", () => {
+      switchNote(n.id);
+      closeCalendar();
+      closeTOP();
+    });
+    list.appendChild(row);
+  });
+  detail.classList.add("show");
+  detail.scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+
+function openCalendar() {
+  calYear  = new Date().getFullYear();
+  calMonth = new Date().getMonth();
+  renderCalendar();
+  // トップページを一時的に隠してカレンダーを前面に出す
+  $("top-page").style.display = "none";
+  $("cal-page").classList.add("show");
+}
+
+function closeCalendar() {
+  $("cal-page").classList.remove("show");
+  // トップページを再表示
+  $("top-page").style.display = "flex";
+}
+
+$("cal-back-btn").addEventListener("click", closeCalendar);
+$("cal-prev").addEventListener("click", () => {
+  if (calMonth === 0) { calYear--; calMonth = 11; } else { calMonth--; }
+  renderCalendar();
+});
+$("cal-next").addEventListener("click", () => {
+  if (calMonth === 11) { calYear++; calMonth = 0; } else { calMonth++; }
+  renderCalendar();
+});
+</script>
+</body>
+</html>
