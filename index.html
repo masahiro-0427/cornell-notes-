@@ -30,6 +30,9 @@
     .hbtn-add:hover { background:#f0e4c0; }
     .hbtn-save  { background:#3d6b8a; color:#fff; transition:background .3s; }
     .hbtn-save.ok { background:#4caf80; }
+    .hbtn-copy  { background:#7a9c8a; color:#fff; transition:background .3s; }
+    .hbtn-copy:hover { background:#8aad9a; }
+    .hbtn-copy.ok { background:#4caf80; }
     .hbtn-print { background:#5d6d7e; color:#fff; }
     .hbtn-print:hover { background:#6d7d8e; }
     .hbtn-home  { background:rgba(255,255,255,.15); color:#f5f0e8; }
@@ -744,6 +747,7 @@
     <span id="save-status">自動保存: ON</span>
     <button class="hbtn hbtn-home" id="sync-btn">🔑 同期</button>
     <button class="hbtn hbtn-home" id="home-btn">🏠 ホーム</button>
+    <button class="hbtn hbtn-copy" id="copy-btn" title="このノートの中身をテキストでコピー（Claudeに貼ってフラッシュカード化などに）">📋 コピー</button>
     <button class="hbtn hbtn-add" id="add-btn">＋ 新規</button>
     <button class="hbtn hbtn-print" id="print-btn">🖨 印刷/PDF</button>
     <button class="hbtn hbtn-save" id="save-btn">💾 保存</button>
@@ -1527,6 +1531,68 @@ $("home-btn").addEventListener("click", () => {
 ══════════════════════════════════════ */
 function stripHtml(html) { const d = document.createElement("div"); d.innerHTML = html; return d.textContent || ""; }
 function escHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* ══════════════════════════════════════
+   ノートをテキストでコピー
+══════════════════════════════════════ */
+// contenteditableのHTMLを、改行を保ったプレーンテキストに変換
+function htmlToText(html) {
+  if (!html) return "";
+  let s = html
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<\/(div|p|li|h[1-6]|blockquote)>/gi, "\n")
+    .replace(/<[^>]+>/g, "");
+  const d = document.createElement("div");
+  d.innerHTML = s;                       // 実体参照（&amp;等）を戻す
+  return (d.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+// 開いているノートを、ラベル付きの読みやすいテキストにまとめる
+function noteToPlainText(n) {
+  const parts = [];
+  parts.push(`【タイトル】${n.title || "無題"}`);
+  if (n.topic) parts.push(`【トピック】${n.topic}`);
+  if ((n.tags || []).length) parts.push(`【タグ】${n.tags.join(", ")}`);
+  const kw   = htmlToText(n.cueKeywords); if (kw)   parts.push(`【キーワード】\n${kw}`);
+  const memo = htmlToText(n.cueMemo);     if (memo) parts.push(`【メモ・質問】\n${memo}`);
+  const body = htmlToText(n.notes);       if (body) parts.push(`【ノート】\n${body}`);
+  const sum  = htmlToText(n.summary);     if (sum)  parts.push(`【要約】\n${sum}`);
+  return parts.join("\n\n");
+}
+
+async function copyNoteToClipboard() {
+  flushActive();
+  const n = activeNote(); if (!n) return;
+  const text = noteToPlainText(n);
+  let ok = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    }
+  } catch (e) { ok = false; }
+  if (!ok) {                              // 非対応環境（file://等）のフォールバック
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;left:-9999px;top:0;";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (e) { ok = false; }
+  }
+  const b = $("copy-btn");
+  if (ok) {
+    b.textContent = "✓ コピーしました"; b.classList.add("ok");
+    setTimeout(() => { b.textContent = "📋 コピー"; b.classList.remove("ok"); }, 1800);
+  } else {
+    b.textContent = "コピー失敗"; 
+    setTimeout(() => { b.textContent = "📋 コピー"; }, 1800);
+  }
+}
+
+$("copy-btn").addEventListener("click", copyNoteToClipboard);
 
 /* ══════════════════════════════════════
    端末間同期（同期コード方式・任意 / jsonblob.com）
