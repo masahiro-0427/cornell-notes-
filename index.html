@@ -68,6 +68,29 @@
     .tag-chip-filter.active { background:#3d6b8a; color:#fff; border-color:#3d6b8a; }
     #tag-filter-label { font-family:sans-serif; font-size:9px; color:#aaa; letter-spacing:.1em; flex-basis:100%; }
 
+    /* フォルダ欄 */
+    #folder-wrap { padding:8px 10px 7px; border-bottom:1px solid #d4d0ca; flex-shrink:0; }
+    #folder-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+    #folder-head .fh-label { font-family:sans-serif; font-size:9px; letter-spacing:.1em; color:#aaa; text-transform:uppercase; }
+    #folder-add { background:none; border:none; color:#3d6b8a; cursor:pointer; font-size:14px; font-family:sans-serif; line-height:1; padding:0 3px; }
+    #folder-add:hover { color:#2c3e50; }
+    #folder-list { display:flex; flex-direction:column; gap:1px; }
+    .folder-row {
+      display:flex; align-items:center; justify-content:space-between; gap:4px;
+      padding:4px 7px; border-radius:5px; cursor:pointer;
+      font-family:sans-serif; font-size:12px; color:#5a5148; transition:background .12s;
+    }
+    .folder-row:hover { background:#ded9d2; }
+    .folder-row.active { background:#3d6b8a; color:#fff; }
+    .folder-row .fr-name { display:flex; align-items:center; gap:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+    .folder-row .fr-count { font-size:10px; opacity:.7; flex-shrink:0; }
+    .folder-row .fr-actions { display:none; gap:1px; flex-shrink:0; }
+    .folder-row:hover .fr-actions, .folder-row.active .fr-actions { display:flex; }
+    .fr-btn { background:none; border:none; cursor:pointer; font-size:11px; line-height:1; padding:0 2px; color:inherit; opacity:.6; }
+    .fr-btn:hover { opacity:1; }
+    /* ノート項目のフォルダ表示 */
+    .note-item .nfolder { font-family:sans-serif; font-size:9px; color:#8a7f70; margin-top:2px; }
+
     .sidebar-title { font-family:sans-serif; font-size:9px; letter-spacing:.18em; color:#999; font-weight:bold; padding:10px 12px 4px; text-transform:uppercase; flex-shrink:0; }
     #note-list { overflow-y:auto; flex:1; }
 
@@ -231,6 +254,37 @@
     .cue-divider {
       height:2px; background: repeating-linear-gradient(90deg, #e8a0a0 0, #e8a0a0 6px, transparent 6px, transparent 12px);
       margin:0;
+    }
+
+    /* ══ エリア畳み込み ══ */
+    .sec-head {
+      display:flex; align-items:center; justify-content:space-between; gap:6px;
+      cursor:pointer; user-select:none; transition:background .12s;
+    }
+    .sec-head:hover { background:#f2ede4; }
+    .sec-head .sec-arrow {
+      font-size:9px; color:#c0b8a8; transition:transform .2s; flex-shrink:0;
+      font-family:sans-serif;
+    }
+    .sec-head.collapsed .sec-arrow { transform:rotate(-90deg); }
+    .edit-area.collapsed { display:none; }
+    .cue-divider.collapsed { display:none; }
+    .notes-sublabel {
+      font-family:sans-serif; font-size:9px; letter-spacing:.13em; color:#b0a898;
+      text-transform:uppercase; padding:5px 12px; background:#faf8f5;
+      border-bottom:1px solid #ede8e2;
+    }
+    #summary-label.sec-head { padding:5px 12px; }
+    #btn-toggle-all {
+      font-family:sans-serif; font-size:11px; color:#555;
+      background:#fff; border:1px solid #d8d3cc; border-radius:4px;
+      padding:3px 8px; cursor:pointer; transition:background .15s; flex-shrink:0; line-height:1.4;
+    }
+    #btn-toggle-all:hover { background:#e8e4de; }
+    @media print {
+      .edit-area.collapsed { display:block !important; }
+      .cue-divider.collapsed { display:block !important; }
+      .sec-arrow { display:none !important; }
     }
 
     /* ══ 印刷用CSS ══ */
@@ -519,6 +573,62 @@
       #cal-month-label { font-size:12px; min-width:90px; }
     }
 
+    /* ══ 同期モーダル・バッジ（追加） ══ */
+    #sync-overlay {
+      display:none; position:fixed; inset:0; z-index:1500;
+      background:rgba(44,62,80,.55); align-items:center; justify-content:center; padding:20px;
+    }
+    #sync-overlay.show { display:flex; }
+    #sync-modal {
+      background:#faf8f4; border:1px solid #ddd8d0; border-radius:8px;
+      max-width:400px; width:100%; overflow:hidden;
+      box-shadow:0 20px 50px rgba(0,0,0,.35);
+    }
+    #sync-modal-head {
+      background:#2c3e50; color:#f5f0e8; padding:16px 20px;
+      border-bottom:2px solid #e8a0a0;
+      font-family:Georgia,serif; font-weight:bold; font-size:16px;
+    }
+    #sync-modal-body { padding:18px 20px; }
+    #sync-modal-body p { font-family:sans-serif; font-size:12px; color:#666; line-height:1.7; margin-bottom:12px; }
+    #sync-modal-body .sync-label {
+      font-family:sans-serif; font-size:9px; letter-spacing:.15em; color:#aaa;
+      text-transform:uppercase; display:block; margin-bottom:5px;
+    }
+    #sync-code-input {
+      width:100%; padding:9px 11px; border:1px solid #ccc4b8; border-radius:6px;
+      font-family:sans-serif; font-size:12px; background:#fff; color:#333; outline:none;
+    }
+    #sync-code-input:focus { border-color:#3d6b8a; }
+    #sync-help {
+      font-family:sans-serif; font-size:11px; color:#999; line-height:1.7;
+      margin-top:10px; margin-bottom:0;
+    }
+    #sync-help a { color:#3d6b8a; }
+    #sync-state {
+      font-family:sans-serif; font-size:11.5px; color:#5a6a7a;
+      min-height:1.3em; margin:12px 0 0;
+    }
+    #sync-actions {
+      display:flex; gap:8px; justify-content:flex-end;
+      padding:14px 20px; border-top:1px solid #e8e4de; background:#f4f1ec;
+    }
+    .sync-abtn {
+      font-family:sans-serif; font-size:12px; font-weight:bold; cursor:pointer;
+      border-radius:6px; padding:8px 14px; border:1px solid #bbb4a8; background:#fff; color:#2c3e50;
+    }
+    .sync-abtn:hover { background:#efe9e2; }
+    .sync-abtn.primary { background:#2c3e50; color:#f5f0e8; border-color:#2c3e50; }
+    .sync-abtn.primary:hover { background:#3d5568; }
+    #sync-badge {
+      position:fixed; left:14px; bottom:12px; z-index:400;
+      font-family:sans-serif; font-size:11px; color:#8a9aaa;
+      background:#fff; border:1px solid #ddd8d0; border-radius:20px;
+      padding:5px 11px; box-shadow:0 1px 4px rgba(0,0,0,.1);
+    }
+    #sync-badge.on { color:#3d8a6b; border-color:#9cd0b8; }
+    @media print { #sync-overlay, #sync-badge { display:none !important; } }
+
   </style>
 </head>
 <body>
@@ -600,6 +710,26 @@
   </div>
 </div>
 
+<!-- ══ 同期モーダル・バッジ（追加） ══ -->
+<div id="sync-overlay">
+  <div id="sync-modal">
+    <div id="sync-modal-head">🔑 端末間で同期</div>
+    <div id="sync-modal-body">
+      <p>同期コード（jsonblobの保存領域ID）で揃えます。別の端末で同じコードを入れると同じノートになります。</p>
+      <span class="sync-label">同期コード</span>
+      <input type="text" id="sync-code-input" placeholder="jsonblobのID または URL" autocomplete="off" spellcheck="false"/>
+      <p id="sync-help">はじめての場合：<a href="https://jsonblob.com" target="_blank" rel="noopener">jsonblob.com</a> を開くと保存領域が自動で作られます。アドレス末尾がその ID なので、それをここに貼ってください。２台目以降は同じ ID を入れるだけで揃います。</p>
+      <p id="sync-state"></p>
+    </div>
+    <div id="sync-actions">
+      <button class="sync-abtn" id="sync-off" style="display:none">同期を解除</button>
+      <button class="sync-abtn" id="sync-cancel">閉じる</button>
+      <button class="sync-abtn primary" id="sync-apply">この端末を同期</button>
+    </div>
+  </div>
+</div>
+<div id="sync-badge">● 同期OFF</div>
+
 <!-- ヘッダー -->
 <div id="header">
   <div class="logo">
@@ -612,6 +742,7 @@
   </div>
   <div class="actions">
     <span id="save-status">自動保存: ON</span>
+    <button class="hbtn hbtn-home" id="sync-btn">🔑 同期</button>
     <button class="hbtn hbtn-home" id="home-btn">🏠 ホーム</button>
     <button class="hbtn hbtn-add" id="add-btn">＋ 新規</button>
     <button class="hbtn hbtn-print" id="print-btn">🖨 印刷/PDF</button>
@@ -632,6 +763,14 @@
     <!-- 検索 -->
     <div id="search-wrap">
       <input id="search-input" type="text" placeholder="🔍 ノートを検索…" />
+    </div>
+    <!-- フォルダ -->
+    <div id="folder-wrap">
+      <div id="folder-head">
+        <span class="fh-label">📁 フォルダ</span>
+        <button id="folder-add" title="フォルダを追加">＋</button>
+      </div>
+      <div id="folder-list"></div>
     </div>
     <!-- タグフィルター -->
     <div id="tag-filter-wrap">
@@ -658,6 +797,10 @@
         <div style="min-width:150px;">
           <label class="flabel">Topic / トピック</label>
           <input class="finput" id="field-topic" style="font-size:13px;color:#666;" placeholder="科目・テーマ"/>
+        </div>
+        <div style="min-width:130px;">
+          <label class="flabel">Folder / フォルダ</label>
+          <select class="finput" id="field-folder" style="font-family:sans-serif;font-size:12px;color:#666;cursor:pointer;"></select>
         </div>
         <!-- タグ -->
         <div id="tag-input-wrap">
@@ -743,6 +886,9 @@
 
           <div class="tb-sep"></div>
           <button class="tb-btn" id="btn-plain-paste" title="ONにすると貼り付け時に書式を自動除去します（Wordの『テキストのみ保持』と同じ）">📋 書式なし貼付: OFF</button>
+
+          <div class="tb-sep"></div>
+          <button id="btn-toggle-all" title="全エリアを一括で開く／畳む">▸ 全部畳む</button>
         </div>
       </div>
 
@@ -755,15 +901,16 @@
       <!-- 2カラム -->
       <div id="columns">
         <div id="col-cue">
-          <div class="cue-sublabel">🔑 キーワード</div>
+          <div class="cue-sublabel sec-head" data-target="area-cue-keywords" data-divider="div-kw"><span>🔑 キーワード</span><span class="sec-arrow">▼</span></div>
           <div class="edit-area" id="area-cue-keywords" contenteditable="true"
             data-placeholder="重要なキーワード&#10;・用語の定義&#10;・テストに出そうな語句"></div>
-          <div class="cue-divider"></div>
-          <div class="cue-sublabel">📝 メモ・質問</div>
+          <div class="cue-divider" id="div-kw"></div>
+          <div class="cue-sublabel sec-head" data-target="area-cue-memo"><span>📝 メモ・質問</span><span class="sec-arrow">▼</span></div>
           <div class="edit-area" id="area-cue-memo" contenteditable="true"
             data-placeholder="疑問点・補足メモ&#10;・主題は何か？&#10;・なぜ重要か？"></div>
         </div>
         <div id="col-notes">
+          <div class="notes-sublabel sec-head" data-target="area-notes"><span>✍️ ノート</span><span class="sec-arrow">▼</span></div>
           <div class="edit-area" id="area-notes" contenteditable="true"
             data-placeholder="授業・読書中にメモを取ります。&#10;&#10;• 重要なポイントを箇条書きに&#10;• 図や例を書き留める&#10;• 略語を使って速く書く"></div>
         </div>
@@ -771,7 +918,7 @@
 
       <!-- サマリー -->
       <div id="summary-wrap">
-        <div id="summary-label">③ Summary / サマリーエリア</div>
+        <div id="summary-label" class="sec-head" data-target="area-summary"><span>③ Summary / サマリーエリア</span><span class="sec-arrow">▼</span></div>
         <div class="edit-area" id="area-summary" contenteditable="true"
           data-placeholder="授業・学習の後に、このページの内容を2〜3文で要約します。自分の言葉でまとめることで理解が深まります。"></div>
       </div>
@@ -804,7 +951,10 @@ const $ = id => document.getElementById(id);
 const today = () => new Date().toLocaleDateString("ja-JP");
 
 const loadAll = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; } };
-const saveAll = () => { localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes:state.notes, activeId:state.activeId })); };
+const saveAll = () => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes:state.notes, activeId:state.activeId, folders:state.folders })); } catch(e) {}
+  syncPushDebounced(); // 同期ONのときだけ shared 領域へも反映
+};
 
 /* ══════════════════════════════════════
    状態
@@ -815,6 +965,7 @@ let activePen  = null;
 let autoTimer  = null;
 let searchQ    = "";
 let tagFilter  = null;
+let folderFilter = null; // null=すべて / "__unfiled__"=未分類 / folderId
 
 const activeNote = () => state.notes.find(n => n.id === state.activeId);
 
@@ -828,11 +979,14 @@ function initState() {
     state.activeId = data.activeId || data.notes[0].id;
     state.nextId   = Math.max(...data.notes.map(n => n.id)) + 1;
   } else {
-    const note = { id:1, title:"はじめてのノート", date:today(), topic:"", tags:[], cueKeywords:"", cueMemo:"", notes:"", summary:"" };
+    const note = { id:1, title:"はじめてのノート", date:today(), topic:"", tags:[], folderId:null, cueKeywords:"", cueMemo:"", notes:"", summary:"" };
     state.notes = [note]; state.activeId = 1; state.nextId = 2;
   }
-  // tagsがないノートに空配列を追加（旧データ互換）
-  state.notes.forEach(n => { if (!n.tags) n.tags = []; });
+  // フォルダ（旧データ互換）
+  state.folders = (data && Array.isArray(data.folders)) ? data.folders : [];
+  state.nextFolderId = state.folders.length ? Math.max(...state.folders.map(f => f.id)) + 1 : 1;
+  // tags / folderId がないノートに初期値を付与（旧データ互換）
+  state.notes.forEach(n => { if (!n.tags) n.tags = []; if (!("folderId" in n)) n.folderId = null; });
 }
 
 /* ══════════════════════════════════════
@@ -859,6 +1013,7 @@ function renderNote() {
   $("field-topic").value      = n.topic;
   $("field-date").value       = n.date;
   renderTagBadges(n.tags || []);
+  renderFolderSelect();
 }
 
 /* ══════════════════════════════════════
@@ -922,15 +1077,130 @@ function renderTagFilter() {
 }
 
 /* ══════════════════════════════════════
+   フォルダ
+══════════════════════════════════════ */
+function folderName(id) {
+  if (id == null) return "未分類";
+  const f = state.folders.find(f => f.id === id);
+  return f ? f.name : "未分類";
+}
+function noteCountIn(filter) {
+  return state.notes.filter(n => {
+    if (filter === "__unfiled__") return n.folderId == null;
+    return n.folderId === filter;
+  }).length;
+}
+
+function addFolder() {
+  const name = (prompt("フォルダ名を入力") || "").trim();
+  if (!name) return;
+  const id = state.nextFolderId++;
+  state.folders.push({ id, name });
+  folderFilter = id; // 作ったフォルダに切り替え
+  saveAll(); renderFolders(); renderSidebar();
+}
+function renameFolder(id) {
+  const f = state.folders.find(f => f.id === id); if (!f) return;
+  const name = (prompt("フォルダ名を変更", f.name) || "").trim();
+  if (!name) return;
+  f.name = name;
+  saveAll(); renderFolders(); renderSidebar(); renderFolderSelect();
+}
+function deleteFolder(id) {
+  const f = state.folders.find(f => f.id === id); if (!f) return;
+  const cnt = noteCountIn(id);
+  const msg = cnt ? `「${f.name}」を削除します。中の${cnt}件のノートは「未分類」に戻ります（ノート自体は消えません）。よろしいですか？`
+                  : `「${f.name}」を削除します。よろしいですか？`;
+  if (!confirm(msg)) return;
+  state.notes.forEach(n => { if (n.folderId === id) n.folderId = null; });
+  state.folders = state.folders.filter(f => f.id !== id);
+  if (folderFilter === id) folderFilter = null;
+  saveAll(); renderFolders(); renderSidebar(); renderFolderSelect();
+}
+function setActiveNoteFolder(folderId) {
+  const n = activeNote(); if (!n) return;
+  n.folderId = folderId;
+  saveAll(); renderFolders(); renderSidebar();
+}
+
+// サイドバーのフォルダ一覧
+function renderFolders() {
+  const list = $("folder-list");
+  if (!list) return;
+  list.innerHTML = "";
+
+  const rows = [
+    { key:null,          icon:"📚", label:"すべて",   count:state.notes.length, fixed:true },
+    { key:"__unfiled__", icon:"🗂", label:"未分類",   count:noteCountIn("__unfiled__"), fixed:true },
+    ...state.folders.map(f => ({ key:f.id, icon:"📁", label:f.name, count:noteCountIn(f.id), fixed:false }))
+  ];
+
+  rows.forEach(r => {
+    const row = document.createElement("div");
+    row.className = "folder-row" + (folderFilter === r.key ? " active" : "");
+
+    const name = document.createElement("div");
+    name.className = "fr-name";
+    name.innerHTML = `<span>${r.icon}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.label)}</span>`;
+    row.appendChild(name);
+
+    const right = document.createElement("div");
+    right.style.cssText = "display:flex;align-items:center;gap:3px;flex-shrink:0;";
+    const count = document.createElement("span");
+    count.className = "fr-count";
+    count.textContent = r.count;
+    right.appendChild(count);
+
+    if (!r.fixed) {
+      const actions = document.createElement("div");
+      actions.className = "fr-actions";
+      const ren = document.createElement("button");
+      ren.className = "fr-btn"; ren.textContent = "✎"; ren.title = "名前を変更";
+      ren.addEventListener("click", e => { e.stopPropagation(); renameFolder(r.key); });
+      const del = document.createElement("button");
+      del.className = "fr-btn"; del.textContent = "🗑"; del.title = "削除";
+      del.addEventListener("click", e => { e.stopPropagation(); deleteFolder(r.key); });
+      actions.appendChild(ren); actions.appendChild(del);
+      right.appendChild(actions);
+    }
+    row.appendChild(right);
+
+    row.addEventListener("click", () => {
+      folderFilter = r.key;   // クリックしたフォルダを選択（「すべて」はnull）
+      renderFolders(); renderSidebar();
+    });
+
+    list.appendChild(row);
+  });
+}
+
+// ノートヘッダーのフォルダ選択
+function renderFolderSelect() {
+  const sel = $("field-folder");
+  if (!sel) return;
+  const n = activeNote();
+  const cur = n ? n.folderId : null;
+  let html = `<option value="">未分類</option>`;
+  state.folders.forEach(f => {
+    html += `<option value="${f.id}"${cur === f.id ? " selected" : ""}>${escHtml(f.name)}</option>`;
+  });
+  sel.innerHTML = html;
+  if (cur == null) sel.value = "";
+}
+
+/* ══════════════════════════════════════
    サイドバー
 ══════════════════════════════════════ */
 function renderSidebar() {
+  renderFolders();
   renderTagFilter();
   const list = $("note-list");
   list.innerHTML = "";
 
   const q = searchQ.toLowerCase();
   let visible = state.notes.filter(n => {
+    if (folderFilter === "__unfiled__") { if (n.folderId != null) return false; }
+    else if (folderFilter != null)      { if (n.folderId !== folderFilter) return false; }
     if (tagFilter && !(n.tags||[]).includes(tagFilter)) return false;
     if (!q) return true;
     return n.title.toLowerCase().includes(q)
@@ -957,6 +1227,13 @@ function renderSidebar() {
     date.textContent = n.date + (n.topic ? " · " + n.topic : "");
 
     item.appendChild(title); item.appendChild(date);
+
+    if (n.folderId != null) {
+      const fdiv = document.createElement("div");
+      fdiv.className = "nfolder";
+      fdiv.textContent = "📁 " + folderName(n.folderId);
+      item.appendChild(fdiv);
+    }
 
     if ((n.tags||[]).length) {
       const tagWrap = document.createElement("div");
@@ -991,7 +1268,8 @@ function switchNote(id) {
 function addNote() {
   flushActive();
   const id = state.nextId++;
-  state.notes.push({ id, title:`ノート ${id}`, date:today(), topic:"", tags:[], cueKeywords:"", cueMemo:"", notes:"", summary:"" });
+  const fid = (folderFilter != null && folderFilter !== "__unfiled__") ? folderFilter : null;
+  state.notes.push({ id, title:`ノート ${id}`, date:today(), topic:"", tags:[], folderId:fid, cueKeywords:"", cueMemo:"", notes:"", summary:"" });
   state.activeId = id;
   renderNote(); renderSidebar();
 }
@@ -1157,6 +1435,11 @@ $("field-title").addEventListener("input", () => {
   renderSidebar(); scheduleAutoSave();
 });
 $("field-topic").addEventListener("input", scheduleAutoSave);
+$("field-folder").addEventListener("change", function() {
+  const v = this.value;
+  setActiveNoteFolder(v === "" ? null : Number(v));
+});
+$("folder-add").addEventListener("click", addFolder);
 $("field-date").addEventListener("input", () => {
   const n = activeNote(); if (n) n.date = $("field-date").value;
   renderSidebar(); scheduleAutoSave();
@@ -1246,11 +1529,197 @@ function stripHtml(html) { const d = document.createElement("div"); d.innerHTML 
 function escHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 /* ══════════════════════════════════════
+   端末間同期（同期コード方式・任意 / jsonblob.com）
+   ・GitHub Pages 等に置いて使う前提。
+   ・jsonblob.com で作った保存領域の ID を「同期コード」として使う。
+   ・アプリは GET/PUT のみ（POSTしない＝ID発行まわりの失敗を回避）。
+   ・localStorage を優先し、使えない環境ではメモリにフォールバック。
+   ・※75日アクセスが無いと jsonblob 側のデータは削除される点に注意。
+══════════════════════════════════════ */
+const LOCAL_SYNC_KEY = "cornell-sync-v1";
+const JB = "https://jsonblob.com/api/jsonBlob";
+let syncBlobId = null;   // 同期コード（blob ID）。null＝同期オフ
+let syncTimer  = null;
+const _mem = {};
+
+// localStorage ラッパー（プレビュー等で使えない場合はメモリに退避）
+function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return (k in _mem) ? _mem[k] : null; } }
+function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){ _mem[k]=v; } }
+function lsDel(k){ try { localStorage.removeItem(k); } catch(e){ delete _mem[k]; } }
+
+// 貼り付けが URL でも ID 単体でも、jsonblob の ID（UUID形式）を取り出す
+function normId(s){
+  s = (s||"").trim(); if(!s) return "";
+  const uuid = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if(uuid) return uuid[0];                          // URL中のUUIDを優先（/json 等の末尾に強い）
+  return s.replace(/[?#].*$/,"").replace(/\/+$/,"").split("/").pop();
+}
+
+// 同期対象データをまとめる／取り込む
+function collectSyncData(){
+  flushActive(); // 画面の最新を反映してから
+  return { notes: state.notes, activeId: state.activeId, folders: state.folders, _savedAt: Date.now() };
+}
+function applySyncData(d){
+  if(!d) return;
+  if(Array.isArray(d.notes)) state.notes = d.notes;
+  if("activeId" in d) state.activeId = d.activeId;
+  if(Array.isArray(d.folders)) state.folders = d.folders;
+  state.notes.forEach(n => { if(!n.tags) n.tags = []; if(!("folderId" in n)) n.folderId = null; }); // 旧データ互換
+  state.nextFolderId = state.folders.length ? Math.max(...state.folders.map(f => f.id)) + 1 : 1;
+  if(state.notes.length){
+    state.nextId = Math.max(...state.notes.map(n => n.id)) + 1;
+    if(!state.notes.some(n => n.id === state.activeId)) state.activeId = state.notes[0].id;
+  }
+}
+function hasSyncData(d){ return !!(d && Array.isArray(d.notes) && (d.notes.length || d._savedAt)); }
+
+// jsonblob API（GET/PUT のみ）
+async function jbGet(id){
+  try { const r = await fetch(JB+"/"+id, { headers:{ Accept:"application/json" } });
+    return r.ok ? await r.json() : null; } catch(e){ return null; }
+}
+async function jbPut(id,obj){
+  try { const r = await fetch(JB+"/"+id, { method:"PUT",
+    headers:{ "Content-Type":"application/json", Accept:"application/json" },
+    body:JSON.stringify(obj) }); return r.ok; } catch(e){ return false; }
+}
+
+// この端末に同期コードを記憶／思い出す／忘れる
+function rememberSync(){ lsSet(LOCAL_SYNC_KEY, JSON.stringify({ blobId: syncBlobId })); }
+function recallSync(){ const v = lsGet(LOCAL_SYNC_KEY); if(!v) return null; try { return JSON.parse(v); } catch(e){ return null; } }
+function forgetSync(){ lsDel(LOCAL_SYNC_KEY); }
+
+async function syncPush(){ return syncBlobId ? await jbPut(syncBlobId, collectSyncData()) : false; }
+async function syncPull(){ return syncBlobId ? await jbGet(syncBlobId) : null; }
+// 保存のたびに呼ぶ（0.7秒デバウンス）。同期オフなら何もしない
+function syncPushDebounced(){
+  if(!syncBlobId) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncPush, 700);
+}
+
+function renderAllSync(){ renderNote(); renderSidebar(); renderTopRecent(); }
+
+function updateSyncBadge(){
+  const b = $("sync-badge"); if(!b) return;
+  const on = !!syncBlobId;
+  b.textContent = on ? "☁ 同期ON" : "● 同期OFF";
+  b.classList.toggle("on", on);
+}
+
+/* ── 同期モーダル ── */
+function openSyncModal(){
+  $("sync-code-input").value = syncBlobId || "";
+  $("sync-off").style.display = syncBlobId ? "inline-block" : "none";
+  $("sync-state").textContent = syncBlobId
+    ? "この端末は同期中です。保存のたびに自動でアップロードされます。"
+    : "同期コードを入れて同期を始めます。";
+  $("sync-overlay").classList.add("show");
+  setTimeout(() => $("sync-code-input").focus(), 60);
+}
+function closeSyncModal(){ $("sync-overlay").classList.remove("show"); }
+
+async function applySync(){
+  const code = normId($("sync-code-input").value);
+  if(!code){ $("sync-code-input").focus(); return; }
+  $("sync-state").textContent = "同期先を確認しています…";
+  syncBlobId = code;
+  const remote = await jbGet(code);
+  if(remote === null){
+    syncBlobId = null; updateSyncBadge();
+    $("sync-state").textContent = "その同期コードにアクセスできませんでした。IDが正しいか、GitHub Pages 上で試しているか確認してください（Claudeのプレビューでは外部通信できません）。";
+    return;
+  }
+  if(hasSyncData(remote)){
+    const when = remote._savedAt ? new Date(remote._savedAt).toLocaleString() : "";
+    if(confirm(`同期先にデータがあります${when?`（保存: ${when}）`:""}。取り込みますか？\n※この端末の現在のノートは置き換わります。`)){
+      applySyncData(remote); saveAll(); renderAllSync();
+    } else {
+      await syncPush(); // 取り込まない＝今の内容で上書き
+    }
+  } else {
+    await syncPush(); // 空の領域＝今の内容で初期化
+  }
+  rememberSync();
+  updateSyncBadge();
+  closeSyncModal();
+}
+async function turnOffSync(){
+  syncBlobId = null;
+  forgetSync();           // jsonblob 側のデータは他端末のために残す
+  updateSyncBadge();
+  closeSyncModal();
+}
+
+$("sync-btn").addEventListener("click", openSyncModal);
+$("sync-cancel").addEventListener("click", closeSyncModal);
+$("sync-apply").addEventListener("click", applySync);
+$("sync-off").addEventListener("click", turnOffSync);
+$("sync-code-input").addEventListener("keydown", e => { if(e.key === "Enter") applySync(); });
+$("sync-overlay").addEventListener("click", e => { if(e.target.id === "sync-overlay") closeSyncModal(); });
+
+/* ══════════════════════════════════════
+   エリア畳み込み（収納）
+══════════════════════════════════════ */
+const COLLAPSE_KEY = "cornell-collapse-v1";
+const COLLAPSE_TARGETS = ["area-cue-keywords","area-cue-memo","area-notes","area-summary"];
+let collapsed = loadCollapse();
+
+function loadCollapse() {
+  try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY)) || {}; } catch { return {}; }
+}
+function saveCollapse() { try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapsed)); } catch(e){} }
+
+function applyCollapse() {
+  document.querySelectorAll(".sec-head").forEach(head => {
+    const target = head.dataset.target;
+    const isC = !!collapsed[target];
+    head.classList.toggle("collapsed", isC);
+    const area = $(target);
+    if (area) area.classList.toggle("collapsed", isC);
+    if (head.dataset.divider) {
+      const div = $(head.dataset.divider);
+      if (div) div.classList.toggle("collapsed", isC);
+    }
+  });
+  updateToggleAllLabel();
+}
+
+function toggleCollapse(target) {
+  collapsed[target] = !collapsed[target];
+  saveCollapse();
+  applyCollapse();
+}
+
+function updateToggleAllLabel() {
+  const btn = $("btn-toggle-all");
+  if (!btn) return;
+  const allCollapsed = COLLAPSE_TARGETS.every(t => collapsed[t]);
+  btn.textContent = allCollapsed ? "▾ 全部開く" : "▸ 全部畳む";
+}
+
+// 見出しクリックで個別に開閉
+document.querySelectorAll(".sec-head").forEach(head => {
+  head.addEventListener("click", () => toggleCollapse(head.dataset.target));
+});
+
+// 一括開閉（全部畳まれていなければ全畳み、全部畳まれていれば全展開）
+$("btn-toggle-all").addEventListener("click", () => {
+  const allCollapsed = COLLAPSE_TARGETS.every(t => collapsed[t]);
+  const next = !allCollapsed;
+  COLLAPSE_TARGETS.forEach(t => collapsed[t] = next);
+  saveCollapse();
+  applyCollapse();
+});
+
+/* ══════════════════════════════════════
    初期描画
 ══════════════════════════════════════ */
 initState();
 renderNote();
 renderSidebar();
+applyCollapse();
 if (window.innerWidth > 700) $("sidebar").classList.remove("hidden");
 
 /* ══════════════════════════════════════
@@ -1285,6 +1754,20 @@ renderTopRecent();
 $("top-start-btn").addEventListener("click", closeTOP);
 $("top-new-btn").addEventListener("click", () => { addNote(); closeTOP(); });
 $("top-cal-btn").addEventListener("click", openCalendar);
+
+/* ══════════════════════════════════════
+   同期の起動処理（同期コードが記憶済みなら取り込み）
+══════════════════════════════════════ */
+(async function initSync(){
+  const saved = recallSync();
+  if(saved && saved.blobId){
+    syncBlobId = saved.blobId;
+    const remote = await syncPull();
+    if(remote){ applySyncData(remote); renderAllSync(); saveAll(); }
+  }
+  updateSyncBadge();
+  if(syncBlobId){ await syncPush(); } // 取り込み後に最新をそろえる
+})();
 
 /* ══════════════════════════════════════
    カレンダー
